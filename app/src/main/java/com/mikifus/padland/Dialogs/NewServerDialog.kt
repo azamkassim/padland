@@ -15,7 +15,6 @@ import com.mikifus.padland.R
 import java.lang.Exception
 import java.net.URL
 
-
 /**
  * Created by mikifus on 10/03/16.
  */
@@ -46,16 +45,26 @@ open class NewServerDialog: FormDialog() {
             Toast.makeText(context, getString(R.string.serverlist_dialog_new_server_name_invalid), Toast.LENGTH_LONG).show()
             return false
         }
-//        if(!NAME_VALIDATION.matcher(name).matches()) {
-//            Toast.makeText(context, getString(R.string.serverlist_dialog_new_server_name_invalid), Toast.LENGTH_LONG).show()
-//            return false
-//        }
 
-        // Build URL, it will throw an exception if not correct
+        val parsedUrl: URL
         try {
-            URL(url).toURI()
+            parsedUrl = URL(url)
+            parsedUrl.toURI()
         } catch (exception: Exception) {
             Toast.makeText(context, getString(R.string.validation_url_invalid), Toast.LENGTH_LONG).show()
+            return false
+        }
+
+        val isHttps = parsedUrl.protocol.equals("https", ignoreCase = true)
+        val isLocalhostHttp = parsedUrl.protocol.equals("http", ignoreCase = true) &&
+            parsedUrl.host.equals("localhost", ignoreCase = true)
+
+        if (!isHttps && !isLocalhostHttp) {
+            Toast.makeText(
+                context,
+                "NEXUS requires HTTPS. HTTP is allowed only for localhost.",
+                Toast.LENGTH_LONG
+            ).show()
             return false
         }
 
@@ -82,9 +91,7 @@ open class NewServerDialog: FormDialog() {
             .replace("/$".toRegex(), "")
 
         if (padprefix.isNotEmpty()) {
-            // Must start and end with /
             if (padprefix.startsWith(saveUrl)) {
-                // Autodetect from full URL
                 padprefix = padprefix.substring(saveUrl.length)
             }
             if (!padprefix.startsWith("/")) {
@@ -154,8 +161,6 @@ open class NewServerDialog: FormDialog() {
                 View.GONE
             }
             if(mAdvancedLayout?.visibility == View.VISIBLE) {
-                // Will scroll a bit down to reveal the new content.
-                // Will incidentally focus the input on that content which is ok.
                 mAdvancedLayout!!.requestFocus()
             }
         }
@@ -170,7 +175,7 @@ open class NewServerDialog: FormDialog() {
                     activity?.getString(R.string.default_pad_prefix_lite)
                     && mJqueryCheckBox?.isChecked == true)
         }
-        mLiteCheckbox?.setOnCheckedChangeListener { compoundButton, b ->
+        mLiteCheckbox?.setOnCheckedChangeListener { _, b ->
             if (b && mCryptPadCheckbox?.isChecked == true) {
                 mCryptPadCheckbox?.isChecked = false
             }
