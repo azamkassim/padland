@@ -16,7 +16,6 @@
         android:theme="@style/PadLandAppTheme"
         android:usesCleartextTraffic="false">
 
-        <!-- Privacy please -->
         <meta-data
             android:name="android.webkit.WebView.MetricsOptOut"
             android:value="true" />
@@ -32,17 +31,17 @@
 
         <activity
             android:name=".Activities.IntroActivity"
-            android:label="@string/title_activity_intro" />
+            android:label="NEXUS TeamPad Setup" />
 
         <activity
             android:name=".Activities.PadListActivity"
-            android:label="@string/title_activity_padlist"
+            android:label="NEXUS TeamPad"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:exported="true" />
 
         <activity
             android:name=".Activities.PadViewActivity"
-            android:label="@string/title_activity_pad_view"
+            android:label="NEXUS TeamPad Workspace"
             android:parentActivityName=".Activities.PadListActivity"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize"
             android:hardwareAccelerated="true"
@@ -65,8 +64,7 @@
 
         <activity
             android:name=".Activities.AboutActivity"
-            android:label="@string/title_activity_about">
-
+            android:label="About NEXUS TeamPad">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Activities.SettingsActivity" />
@@ -74,7 +72,7 @@
 
         <activity
             android:name=".Activities.SettingsActivity"
-            android:label="@string/title_activity_settings"
+            android:label="NEXUS TeamPad Settings"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -83,7 +81,7 @@
 
         <activity
             android:name=".Activities.PadInfoActivity"
-            android:label="@string/title_activity_pad_info"
+            android:label="NEXUS TeamPad Document"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -92,9 +90,8 @@
 
         <activity
             android:name=".Activities.ServerListActivity"
-            android:label="@string/title_activity_server_list"
+            android:label="Approved TeamPad Servers"
             android:configChanges="keyboard|keyboardHidden|orientation|screenSize">
-
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value=".Activities.SettingsActivity" />
