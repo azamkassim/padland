@@ -64,10 +64,15 @@ abstract class PadListDatabase : RoomDatabase() {
         }
 
         /**
-         * WARNING: Use only for tests
+         * WARNING: Use only for tests.
+         *
+         * Rebuild the singleton even if application startup already opened the
+         * production-style instance. Robolectric provider tests intentionally
+         * require an allow-main-thread-queries database.
          */
         fun getMainThreadInstance(context: Context): PadListDatabase {
-            return INSTANCE?: synchronized(this){
+            return synchronized(this) {
+                INSTANCE?.close()
                 val instance = getDatabaseBuilder(context)
                     .allowMainThreadQueries()
                     .build()
