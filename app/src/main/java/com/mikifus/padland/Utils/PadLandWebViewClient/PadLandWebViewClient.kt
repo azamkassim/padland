@@ -1,4 +1,4 @@
-package com.mikifus.padland.Utils.PadLandWebViewClient;
+package com.mikifus.padland.Utils.PadLandWebViewClient
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
@@ -14,12 +14,7 @@ import android.webkit.WebView
 import androidx.annotation.RequiresApi
 import com.mikifus.padland.R
 import com.mikifus.padland.Utils.WhiteListMatcher
-import kotlinx.coroutines.CompletableDeferred
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 class PadLandWebViewClient(hostsWhitelist: List<String>, private val callbacks: PadLandWebClientCallbacks) :
     PadLandSaferWebViewClient(hostsWhitelist),
@@ -36,7 +31,6 @@ class PadLandWebViewClient(hostsWhitelist: List<String>, private val callbacks: 
         }
     private var isLoading: Boolean = false
         set(value) {
-            // Callback on start or stop loading
             when(value) {
                 true -> onStartLoading()
                 else -> onStopLoading()
@@ -50,7 +44,6 @@ class PadLandWebViewClient(hostsWhitelist: List<String>, private val callbacks: 
         Log.d(TAG, "Added connection $webViewHttpConnections")
         onPageStartedCallback(view, url, favicon)
     }
-
 
     override fun onPageFinished(view: WebView, url: String) {
         super.onPageFinished(view, url)
@@ -94,7 +87,6 @@ class PadLandWebViewClient(hostsWhitelist: List<String>, private val callbacks: 
         if ((URLUtil.isHttpUrl(url) || URLUtil.isHttpsUrl(url)) &&
             !WhiteListMatcher.isValidHost(url, hostsWhitelist)) {
 
-            // WARNING: Runs blocking, avoid blocking the UI on the callback
             return runBlocking {
                 return@runBlocking onExternalHostUrlLoad(url)
             }
@@ -110,15 +102,16 @@ class PadLandWebViewClient(hostsWhitelist: List<String>, private val callbacks: 
             SslError.SSL_NOTYETVALID -> view.context.getString(R.string.error_ssl_not_yet_valid)
             SslError.SSL_UNTRUSTED -> view.context.getString(R.string.error_ssl_untrusted)
             SslError.SSL_DATE_INVALID -> view.context.getString(R.string.error_ssl_date_invalid)
-            else -> { error.primaryError.toString() }
+            else -> error.primaryError.toString()
         }
 
-        Log.e(TAG, "SSL Error received: " + error.primaryError + " - " + message)
+        Log.e(TAG, "SSL Error blocked: " + error.primaryError + " - " + message)
 
-        callbacks.onReceivedSslError(handler, error.url, message)
+        // NEXUS security invariant: certificate errors are never bypassable.
+        handler.cancel()
     }
+
     override suspend fun onUnsafeUrlProtocol(url: String): Boolean {
-        // WARNING: Runs blocking, it seems to work as expected
         return runBlocking {
             callbacks.onUnsafeUrlProtocol(url)
         }
