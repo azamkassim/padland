@@ -25,14 +25,13 @@ jobs:
           java-version: '17'
           cache: gradle
 
-      - name: Set up Gradle
+      - name: Set up Gradle 9.5.1
         uses: gradle/actions/setup-gradle@v4
-
-      - name: Make Gradle wrapper executable
-        run: chmod +x ./gradlew
+        with:
+          gradle-version: '9.5.1'
 
       - name: Run unit tests
-        run: ./gradlew --no-daemon testDebugUnitTest
+        run: gradle --no-daemon testDebugUnitTest
 
       - name: Build debug APK
-        run: ./gradlew --no-daemon assembleDebug
+        run: gradle --no-daemon assembleDebug
