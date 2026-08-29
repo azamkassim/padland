@@ -42,13 +42,14 @@ class ManagesNewServerDialog: ManagesDialog(), IManagesNewServerDialog {
     }
 
     private fun initEvents(activity: AppCompatActivity,
-                           onDismissCallBack: (() -> Unit)?) {
+                           onSavedCallback: (() -> Unit)?) {
+        dialog.dismissCallback = null
         dialog.setPositiveButtonCallback { data ->
             saveNewServerDialog(activity, data)
             dialog.clearForm()
             closeDialog(activity)
+            onSavedCallback?.invoke()
         }
-        onDismissCallBack?.let { dialog.dismissCallback = onDismissCallBack }
     }
 
     private fun initAnimations(activity: AppCompatActivity) {

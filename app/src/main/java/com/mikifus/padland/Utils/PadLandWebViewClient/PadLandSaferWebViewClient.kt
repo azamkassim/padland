@@ -1,9 +1,7 @@
 package com.mikifus.padland.Utils.PadLandWebViewClient
 
-import android.app.Activity
 import android.graphics.Bitmap
 import android.os.Build
-import android.webkit.URLUtil
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -11,35 +9,28 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewModelScope
+import com.mikifus.padland.Utils.NexusNetworkPolicy
 import com.mikifus.padland.Utils.WhiteListMatcher
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayInputStream
-import java.io.IOException
 import java.net.HttpURLConnection
-import java.net.MalformedURLException
 import java.net.URL
 
 /**
- * Implements whitelisting on host name
+ * WebView client with host whitelisting and NEXUS transport enforcement.
  *
+ * Remote traffic must use HTTPS. Cleartext HTTP is permitted only for
+ * same-device localhost so a local Termux-hosted service can be used.
  */
 open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebViewClient() {
     private var corsDomains: List<String>? = null
     private val webResourceResponseFromString: WebResourceResponse
-        get() {
-            return getUtf8EncodedWebResourceResponse(ByteArrayInputStream("".toByteArray()))
-        }
+        get() = getUtf8EncodedWebResourceResponse(ByteArrayInputStream("".toByteArray()))
 
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
-        val isValid = isValidHost(request.url.toString())
-        return if (isValid) {
+        return if (isValidRequestUrl(request.url.toString())) {
             super.shouldInterceptRequest(view, request)
         } else {
             webResourceResponseFromString
@@ -48,8 +39,7 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
 
     @Deprecated("Deprecated in Java")
     override fun shouldInterceptRequest(view: WebView, url: String): WebResourceResponse? {
-        val isValid = isValidHost(url)
-        return if (isValid) {
+        return if (isValidRequestUrl(url)) {
             @Suppress("DEPRECATION")
             super.shouldInterceptRequest(view, url)
         } else {
@@ -61,12 +51,6 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
         return WebResourceResponse("text/css", "UTF-8", data)
     }
 
-    /**
-     * Returning false we allow http to https redirects
-     * @param view
-     * @param request
-     * @return
-     */
     @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
     override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
         return false
@@ -77,21 +61,24 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
         return false
     }
 
-    private fun isValidHost(url: String?): Boolean {
-        if(URLUtil.isHttpUrl(url)) {
-            onUnsafeUrlProtocol(url)
+    private fun isValidRequestUrl(url: String?): Boolean {
+        if (!NexusNetworkPolicy.isTransportAllowed(url)) {
+            return false
         }
-        val hostsList: List<String> = corsDomains?.let { (hostsWhitelist + corsDomains as List<String>)  } ?: hostsWhitelist
-        return WhiteListMatcher.isValidHost(url, hostsList)
+
+        val hostsList: List<String> = corsDomains?.let { hostsWhitelist + it } ?: hostsWhitelist
+        return WhiteListMatcher.isValidHost(url!!, hostsList)
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
-        if(corsDomains == null && view != null) {
+        if (corsDomains == null && view != null && isValidRequestUrl(url)) {
             corsDomains = listOf()
             view.findViewTreeLifecycleOwner()?.lifecycleScope?.launch(Dispatchers.IO) {
                 val headers = url?.let { getUrlHeaders(it) }
-                if (headers != null && headers.containsKey("content-security-policy") && headers["content-security-policy"]!!.isNotEmpty()) {
-                    corsDomains = extractUniqueUrls(headers["content-security-policy"]!![0] as String)
+                if (headers != null &&
+                    headers.containsKey("content-security-policy") &&
+                    headers["content-security-policy"]!!.isNotEmpty()) {
+                    corsDomains = extractUniqueUrls(headers["content-security-policy"]!![0])
                 }
             }
         }
@@ -106,29 +93,20 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
             connection.requestMethod = "GET"
             connection.connect()
 
-            // If the response is successful, return headers
             if (connection.responseCode == HttpURLConnection.HTTP_OK) {
                 headers = connection.headerFields
             }
         } finally {
-            // Close the connection
             connection.disconnect()
         }
         return headers
     }
 
     private fun extractUniqueUrls(input: String): List<String> {
-        // Regular expression pattern to find URLs
         val urlRegex = Regex("""https?:\/\/([^\s;]+)""")
-
-        // Find all matches in the input string
-        val urls = urlRegex.findAll(input)
-            .map { it.groups[1]!!.value } // Get the matched value (the hostname)
-            .toSet() // Convert to a Set to remove duplicates
-            .toList() // Convert back to a List
-
-        return urls
+        return urlRegex.findAll(input)
+            .map { it.groups[1]!!.value }
+            .toSet()
+            .toList()
     }
-
-    private fun onUnsafeUrlProtocol(url: String?) {}
 }

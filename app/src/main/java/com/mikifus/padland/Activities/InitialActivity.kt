@@ -8,39 +8,22 @@ import com.mikifus.padland.Database.PadListDatabase
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-class InitialActivity: AppCompatActivity() {
+/**
+ * NEXUS TeamPad launcher.
+ *
+ * The inherited Padland introduction is intentionally skipped so the governed
+ * build opens directly into the NEXUS collaboration workspace.
+ */
+class InitialActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        // Force Room DB migration
+        // Force Room DB migration before the main workspace is used.
         lifecycleScope.launch(Dispatchers.Main) {
             PadListDatabase.migrateBeforeRoom(this@InitialActivity)
         }
 
-        launchNext()
-    }
-
-    private fun launchNext() {
-
-        val userDetails = getSharedPreferences(packageName + "_preferences",
-            MODE_PRIVATE
-        )
-        if(userDetails.getBoolean(OPTION_FIRST_START, true)) {
-            // Save first start
-            userDetails.edit().putBoolean(OPTION_FIRST_START, false).apply()
-
-            //  Launch app intro
-            val i = Intent(this, IntroActivity::class.java)
-            startActivity(i)
-            finish()
-        } else {
-            // Launch real main activity
-            startActivity(Intent(this, PadListActivity::class.java))
-            finish()
-        }
-    }
-
-    companion object {
-        private const val OPTION_FIRST_START = "is_first_start"
+        startActivity(Intent(this, PadListActivity::class.java))
+        finish()
     }
 }

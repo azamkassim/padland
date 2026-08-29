@@ -48,7 +48,6 @@ import com.mikifus.padland.Utils.PadLandWebViewClient.PadLandWebViewClient
 import com.mikifus.padland.Utils.PadServer
 import com.mikifus.padland.Utils.PadUrl
 import com.mikifus.padland.Utils.WhiteListMatcher
-import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -63,7 +62,6 @@ class PadViewActivity :
     IManagesNewPadDialog by ManagesNewPadDialog(),
     IManagesDetectedPadDialog by ManagesDetectedPadDialog() {
 
-//    private var padViewModel: PadViewModel? = null
     override var serverViewModel: ServerViewModel? = null
     private var webView: WebView? = null
     private var webViewClient: PadLandWebViewClient? = null
@@ -80,13 +78,8 @@ class PadViewActivity :
             field = value
         }
 
-    // ProgressBar
     private var mProgressBar: ProgressBar? = null
 
-    /**
-     * Check whether it is possible to connect to the internet
-     * @return
-     */
     @Suppress("DEPRECATION")
     private val isNetworkAvailable: Boolean
         get() {
@@ -95,15 +88,9 @@ class PadViewActivity :
                 val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
                 if (capabilities != null) {
                     when {
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
-                            return true
-                        }
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
-                            return true
-                        }
-                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> {
-                            return true
-                        }
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> return true
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> return true
+                        capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) -> return true
                     }
                 }
             } else {
@@ -115,11 +102,6 @@ class PadViewActivity :
             return false
         }
 
-    /**
-     * onCreate override
-     *
-     * @param savedInstanceState
-     */
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         if (intent.extras == null) {
@@ -143,11 +125,9 @@ class PadViewActivity :
     }
 
     private fun makeWebView(urlWhitelist: List<String>) {
-        // If no network...
         if(!isNetworkAvailable) {
             Toast.makeText(applicationContext, getString(R.string.network_is_unreachable), Toast.LENGTH_LONG)
                 .show()
-
             return
         }
 
@@ -162,21 +142,14 @@ class PadViewActivity :
             }
 
             override suspend fun onUnsafeUrlProtocol(url: String): Boolean {
-                val deferred = CompletableDeferred<Boolean>()
-                showSslErrorDialog(this@PadViewActivity,
-                    url,
-                    getString(R.string.ssl_error_dialog_unsafe),
-                    {
-                        webView?.destroy()
-                        finish()
-                        deferred.complete(false)
-                    },
-                    {
-                        deferred.complete(true)
-                    }
-                )
-
-                return deferred.await()
+                withContext(Dispatchers.Main) {
+                    Toast.makeText(
+                        this@PadViewActivity,
+                        "NEXUS blocked an unsafe cleartext URL.",
+                        Toast.LENGTH_LONG
+                    ).show()
+                }
+                return false
             }
 
             override suspend fun onExternalHostUrlLoad(url: String): Boolean {
@@ -195,23 +168,16 @@ class PadViewActivity :
                             finish()
                         }
                     },
-                    { dialogUrl ->
-                        whitelistUrl(dialogUrl)
-                        loadUrl(dialogUrl)
+                    {
+                        // Cancel: do not whitelist or load an unapproved host.
                     }
                 )
                 return false
             }
 
             override fun onReceivedSslError(handler: SslErrorHandler, url: String, message: String) {
-                showSslErrorDialog(this@PadViewActivity, url, message,
-                    {
-                        handler.cancel()
-                    },
-                    {
-                        handler.proceed()
-                    }
-                )
+                // Defensive duplicate of the fail-closed WebViewClient policy.
+                handler.cancel()
             }
 
             override fun onReceivedHttpAuthRequestCallback(
@@ -229,9 +195,7 @@ class PadViewActivity :
                 }
                 Pad.fromUrl(url, activity).value!!
 
-                // If it seems a version 2 cryptpad URL, check if it's a new pad created from drive
                 if (!deferredSave && CryptPadUtils.seemsCrpytPadUrl(url)) {
-
                     lifecycleScope.launch(Dispatchers.IO) {
                         val pad = withContext(Dispatchers.IO) {
                             padViewModel?.getByUrl(url)
@@ -381,9 +345,6 @@ class PadViewActivity :
         padViewModel?.updatePad(updatedPad)
     }
 
-    /**
-     * Loads the fancy ProgressWheel to show it's loading.
-     */
     private fun loadProgress() {
         mProgressBar = findViewById(R.id.progress_indicator)
     }
@@ -396,12 +357,6 @@ class PadViewActivity :
         mProgressBar!!.visibility = View.GONE
     }
 
-    /**
-     * Loads the specified url into the webView, it must be previously set up.
-     * Reads user config on username and color and adds them to the URL.
-     *
-     * @param url
-     */
     private fun loadUrl(url: String) {
         if (!WhiteListMatcher.isValidHost(url, webViewClient!!.hostsWhitelist)) {
             showWhitelistServerDialog(this, url,
@@ -420,9 +375,8 @@ class PadViewActivity :
                         finish()
                     }
                 },
-                { dialogUrl ->
-                    whitelistUrl(dialogUrl)
-                    loadUrl(dialogUrl)
+                {
+                    // Cancel: do not whitelist or load an unapproved host.
                 }
             )
             return
@@ -446,32 +400,6 @@ class PadViewActivity :
         webViewClient!!.hostsWhitelist += urlObject.host
     }
 
-    /**
-     * Creates the options menu.
-     *
-     * @param menu
-     * @return
-     */
-//    override fun onCreateOptionsMenu(menu: Menu): Boolean {
-//        super.onCreateOptionsMenu(menu, R.menu.pad_view)
-//        return true
-//    }
-
-//    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-//        val padList = ArrayList<String?>()
-//        padList.add(_getPadId().toString())
-//        when (item.itemId) {
-//            R.id.menuitem_share -> menuShare(padList)
-//            R.id.menuitem_padlist -> startPadListActivityWithPadId()
-//            else -> return super.onOptionsItemSelected(item)
-//        }
-//        return true
-//    }
-
-    /**
-     * Enables the required settings and features for the webview
-     *
-     */
     @SuppressLint("SetJavaScriptEnabled")
     private fun makeWebSettings() {
         webView = findViewById(R.id.activity_main_webview)
@@ -480,17 +408,20 @@ class PadViewActivity :
 
         val webSettings = webView!!.settings
 
-        // Enable Javascript
         webSettings.javaScriptEnabled = true
-
-        // Other options
         webSettings.useWideViewPort = true
         webSettings.setSupportZoom(true)
         webSettings.builtInZoomControls = true
         webSettings.displayZoomControls = false
         webSettings.loadWithOverviewMode = true
-        webSettings.domStorageEnabled = true // Required for some NodeJS based code
-        webSettings.cacheMode = WebSettings.LOAD_CACHE_ELSE_NETWORK // Feature?: keep cookies
+        webSettings.domStorageEnabled = true
+
+        // NEXUS privacy/security defaults.
+        webSettings.cacheMode = WebSettings.LOAD_NO_CACHE
+        webSettings.allowFileAccess = false
+        webSettings.allowContentAccess = false
+        webSettings.mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+        webSettings.saveFormData = false
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             webSettings.isAlgorithmicDarkeningAllowed = true
@@ -506,11 +437,10 @@ class PadViewActivity :
             }
         }
 
-        // Cookies will be needed for pads
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            cookieManager.setAcceptThirdPartyCookies(webView, true)
+            cookieManager.setAcceptThirdPartyCookies(webView, false)
         }
 
         webView!!.setOnKeyListener(object : View.OnKeyListener {

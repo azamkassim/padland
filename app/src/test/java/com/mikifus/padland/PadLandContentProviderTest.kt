@@ -6,21 +6,14 @@ import android.content.ContentValues
 import android.content.Context
 import android.content.pm.ProviderInfo
 import android.database.Cursor
-import androidx.room.Room
-import androidx.test.core.app.ActivityScenario.launch
 import androidx.test.core.app.ApplicationProvider
 import com.mikifus.padland.Database.PadGroupModel.PadGroup
 import com.mikifus.padland.Database.PadGroupModel.PadGroupsAndPadList
-import com.mikifus.padland.Database.PadGroupModel.PadGroupsWithPadList
 import com.mikifus.padland.Database.PadListDatabase
 import com.mikifus.padland.Database.PadModel.Pad
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.runBlocking
 import org.junit.After
-import org.junit.AfterClass
 import org.junit.Before
-import org.junit.BeforeClass
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.Robolectric
@@ -30,9 +23,8 @@ import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowContentResolver
 import java.sql.Date
 
-
 @RunWith(RobolectricTestRunner::class)
-@Config(application = PadlandApp::class)
+@Config(application = PadlandApp::class, sdk = [35])
 class PadLandContentProviderTest {
     private lateinit var database: PadListDatabase
 
@@ -125,7 +117,6 @@ class PadLandContentProviderTest {
     fun updatePad() {
         val resultUri = mProvider!!.insert(PadLandContentProvider.URI_PAD_LIST, examplePadData)
         assert(resultUri.toString() == PadLandContentProvider.URI_PAD_LIST.toString() + "/1")
-
 
         val rowsUpdated = mProvider!!.update(
             resultUri,
