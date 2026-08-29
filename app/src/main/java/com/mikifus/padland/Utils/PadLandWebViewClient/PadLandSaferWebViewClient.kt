@@ -21,7 +21,7 @@ import java.net.URL
  * WebView client with host whitelisting and NEXUS transport enforcement.
  *
  * Remote traffic must use HTTPS. Cleartext HTTP is permitted only for
- * same-device loopback hosts so a local Termux-hosted service can be used.
+ * same-device localhost so a local Termux-hosted service can be used.
  */
 open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebViewClient() {
     private var corsDomains: List<String>? = null
@@ -65,7 +65,7 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
         if (url.isNullOrBlank()) return false
 
         val isHttps = URLUtil.isHttpsUrl(url)
-        val isLocalHttp = URLUtil.isHttpUrl(url) && isLoopbackUrl(url)
+        val isLocalHttp = URLUtil.isHttpUrl(url) && isLocalhostUrl(url)
 
         if (!isHttps && !isLocalHttp) {
             return false
@@ -75,9 +75,9 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
         return WhiteListMatcher.isValidHost(url, hostsList)
     }
 
-    private fun isLoopbackUrl(url: String): Boolean {
+    private fun isLocalhostUrl(url: String): Boolean {
         val host = runCatching { URL(url).host.lowercase() }.getOrNull() ?: return false
-        return host == "localhost" || host == "127.0.0.1" || host == "::1" || host == "[::1]"
+        return host == "localhost"
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
