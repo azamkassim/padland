@@ -1,12 +1,7 @@
 package com.mikifus.padland.Dialogs.Managers
 
 import android.content.DialogInterface
-import android.content.Intent
-import android.net.Uri
-import android.text.TextPaint
-import android.text.TextUtils
 import androidx.appcompat.app.AppCompatActivity
-import androidx.fragment.app.FragmentTransaction
 import androidx.lifecycle.ViewModelProvider
 import com.mikifus.padland.Database.ServerModel.ServerViewModel
 import com.mikifus.padland.Dialogs.ConfirmDialog
@@ -32,7 +27,7 @@ class ManagesWhitelistServerDialog: ManagesDialog(), IManagesWhitelistServerDial
                                            onNegativeCallback: (dialogUrl: String) -> Unit,
                                            onIgnoreCallback: (dialogUrl: String) -> Unit) {
         initViewModels(activity)
-        initEvents(activity, url, onAddCallback, onNegativeCallback, onIgnoreCallback)
+        initEvents(activity, url, onAddCallback, onNegativeCallback)
 
         dialog.setTitle(activity.getString(R.string.whitelist_server_dialog_title))
         dialog.setMessage(activity.getString(
@@ -41,7 +36,7 @@ class ManagesWhitelistServerDialog: ManagesDialog(), IManagesWhitelistServerDial
         ))
         dialog.positiveButtonText = activity.getString(R.string.serverlist_dialog_new_server_title)
         dialog.negativeButtonText = activity.getString(R.string.whitelist_server_dialog_open_browser)
-        dialog.neutralButtonText = activity.getString(R.string.ignore)
+        dialog.neutralButtonText = activity.getString(android.R.string.cancel)
 
         dialog.show(activity.supportFragmentManager, DIALOG_TAG)
     }
@@ -70,17 +65,15 @@ class ManagesWhitelistServerDialog: ManagesDialog(), IManagesWhitelistServerDial
     private fun initEvents(activity: AppCompatActivity,
                            url: String,
                            onAddCallback: (dialogUrl: String) -> Unit,
-                           onNegativeCallback: (dialogUrl: String) -> Unit,
-                           onIgnoreCallback: (dialogUrl: String) -> Unit) {
-        dialog.neutralButtonCallback = DialogInterface.OnClickListener { dialog, which ->
+                           onNegativeCallback: (dialogUrl: String) -> Unit) {
+        dialog.neutralButtonCallback = DialogInterface.OnClickListener { dialog, _ ->
             dialog.dismiss()
-            onIgnoreCallback(url)
         }
-        dialog.negativeButtonCallback = DialogInterface.OnClickListener { dialog, which ->
+        dialog.negativeButtonCallback = DialogInterface.OnClickListener { dialog, _ ->
             dialog.dismiss()
             onNegativeCallback(url)
         }
-        dialog.positiveButtonCallback = DialogInterface.OnClickListener { dialog, which ->
+        dialog.positiveButtonCallback = DialogInterface.OnClickListener { _, _ ->
             onAddCallback(url)
         }
         dialog.isCancelable = false
