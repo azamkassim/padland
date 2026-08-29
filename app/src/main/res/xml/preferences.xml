@@ -10,7 +10,7 @@
             android:key="auto_save_new_pads"
                 android:title="@string/settings_save_new_pads_title"
                 android:summary="@string/settings_save_new_pads_desc"
-                android:defaultValue="true"
+                android:defaultValue="false"
                 />
 
         <PreferenceScreen
@@ -18,7 +18,7 @@
             android:title="@string/title_activity_server_list"
             android:summary="@string/pref_server_list_summary" >
             <intent
-                android:targetPackage="com.mikifus.padland"
+                android:targetPackage="com.azamkassim.nexusteampad"
                 android:targetClass="com.mikifus.padland.Activities.ServerListActivity"/>
         </PreferenceScreen>
 
@@ -70,7 +70,7 @@
             android:title="@string/about"
             android:summary="@string/about" >
             <intent
-                android:targetPackage="com.mikifus.padland"
+                android:targetPackage="com.azamkassim.nexusteampad"
                 android:targetClass="com.mikifus.padland.Activities.AboutActivity"/>
         </PreferenceScreen>
 
@@ -79,7 +79,7 @@
             android:title="@string/title_activity_intro"
             android:summary="@string/launch_intro" >
             <intent
-                android:targetPackage="com.mikifus.padland"
+                android:targetPackage="com.azamkassim.nexusteampad"
                 android:targetClass="com.mikifus.padland.Activities.IntroActivity"/>
         </PreferenceScreen>
 
