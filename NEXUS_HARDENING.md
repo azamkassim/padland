@@ -19,7 +19,7 @@ Pads are temporary human collaboration workspaces for:
 
 Content becomes governed NEXUS information only after an explicit governed submission/snapshot process is implemented upstream.
 
-## Security invariants
+## Security invariants implemented in v1
 
 1. Public Etherpad/CryptPad services are not trusted defaults.
 2. Remote collaboration traffic must use HTTPS.
@@ -27,7 +27,11 @@ Content becomes governed NEXUS information only after an explicit governed submi
 4. Cleartext HTTP is allowed only to `localhost` for a same-device Termux-hosted service.
 5. Android application backup is disabled for collaboration metadata.
 6. WebView resource access remains host-whitelisted.
-7. Adding a remote server is an explicit user action; future releases should add an administrator-managed approved-server registry.
+7. Non-HTTPS remote servers are rejected when a custom server is saved.
+8. Cancelling a server approval dialog cannot temporarily whitelist the host.
+9. Third-party WebView cookies are disabled.
+10. Mixed HTTP content is blocked.
+11. WebView cache is set to no-cache and local file/content access is disabled.
 
 ## Built-in development endpoint
 
@@ -41,22 +45,30 @@ This endpoint is intended for same-device local development/testing only.
 
 ## Still required before production use
 
-- Enforce HTTPS validation when a custom server is saved, with user-visible error messaging.
-- Remove the temporary "ignore whitelist" path from the server warning dialog.
-- Disable third-party WebView cookies unless a tested Etherpad deployment proves they are required.
-- Review WebView cache/storage behaviour and minimize retained collaboration data.
 - Add an administrator-managed approved-server policy rather than relying only on user-added servers.
 - Add NEXUS workspace metadata (`Customer -> Application -> Workspace -> Team Pad`) without storing authoritative customer facts in the pad client.
 - Add explicit `Submit to NEXUS` snapshot/export flow with immutable lineage and human review.
-- Add automated Android build/tests and security regression tests.
+- Add security regression tests for transport, TLS failure, whitelist and cookie behaviour.
+- Complete Android build and on-device acceptance testing.
+
+## Automated verification
+
+The branch includes `.github/workflows/android-ci.yml` to run:
+
+- `testDebugUnitTest`
+- `assembleDebug`
+
+on pull requests to `master` and pushes to the hardening branch.
 
 ## Release gate
 
 Do not merge this branch into a production-distributed build until the Android project compiles successfully and the following cases are tested on-device:
 
 1. `http://localhost:9001` works when Etherpad is running locally.
-2. Remote `http://` endpoints are blocked.
+2. Remote `http://` endpoints are blocked and cannot be saved.
 3. Valid remote `https://` endpoints work only when explicitly configured/whitelisted.
 4. Invalid, expired, mismatched, or untrusted TLS certificates are blocked with no bypass.
 5. Public upstream default servers do not appear in the new-pad server list.
-6. Application reinstall/backup behaviour does not export collaboration metadata through Android backup.
+6. Cancelling an unapproved-host dialog does not load or whitelist that host.
+7. Third-party cookies remain disabled for tested Etherpad use cases.
+8. Application reinstall/backup behaviour does not export collaboration metadata through Android backup.
