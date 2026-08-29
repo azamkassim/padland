@@ -12,7 +12,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.mikifus.padland.R
-import com.mikifus.padland.Utils.NexusNetworkPolicy
+import com.mikifus.padland.Utils.NexusApprovedServerPolicy
 import java.lang.Exception
 import java.net.URL
 
@@ -54,10 +54,14 @@ open class NewServerDialog: FormDialog() {
             return false
         }
 
-        if (!NexusNetworkPolicy.isTransportAllowed(url)) {
+        val approvedOrigins = resources
+            .getStringArray(R.array.nexus_approved_server_origins)
+            .toList()
+
+        if (!NexusApprovedServerPolicy.isApprovedServerUrl(url, approvedOrigins)) {
             Toast.makeText(
                 context,
-                "NEXUS requires HTTPS. HTTP is allowed only for localhost.",
+                "This server is not in the NEXUS administrator-approved registry.",
                 Toast.LENGTH_LONG
             ).show()
             return false

@@ -21,6 +21,9 @@ interface ServerDao {
     @Query("SELECT * FROM padland_servers")
     fun getAll(): LiveData<List<Server>>
 
+    @Query("SELECT * FROM padland_servers")
+    fun getAllNow(): List<Server>
+
     @Query("SELECT * FROM padland_servers WHERE enabled = 1")
     fun getAllEnabled(): LiveData<List<Server>>
 
@@ -43,7 +46,7 @@ interface ServerDao {
 //            }
 //            c++
 //        }
-//        return if (c < serverUrlPrefixList.size && serverUrlPrefixList[c] != null) {
+//        return if (c < serverUrlList.size && serverUrlPrefixList[c] != null) {
 //            serverUrlPrefixList[c]
 //        } else null
 //    }

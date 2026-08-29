@@ -1,12 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!--
-        NEXUS hardening baseline:
-        Do not ship public Etherpad/CryptPad services as trusted defaults.
-        A same-device Termux Etherpad endpoint is the only built-in option.
-        Remote collaboration servers must be explicitly added by the user and
-        are required by code/network policy to use HTTPS.
+        NEXUS administrator-managed collaboration registry.
+
+        nexus_approved_server_origins is authoritative at runtime. End users may
+        configure a server only when its origin already appears in this list.
+        Adding a remote production server therefore requires a reviewed app build
+        rather than an in-app trust decision.
+
+        A same-device Termux Etherpad endpoint is the only approved origin in the
+        current baseline.
     -->
+    <string-array name="nexus_approved_server_origins" translatable="false">
+        <item>http://localhost:9001</item>
+    </string-array>
+
     <string-array name="etherpad_servers_name" translatable="false">
         <item>NEXUS Local (Termux)</item>
     </string-array>
