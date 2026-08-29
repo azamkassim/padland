@@ -2,7 +2,6 @@ package com.mikifus.padland.Utils.PadLandWebViewClient
 
 import android.graphics.Bitmap
 import android.os.Build
-import android.webkit.URLUtil
 import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
@@ -10,6 +9,7 @@ import android.webkit.WebViewClient
 import androidx.annotation.RequiresApi
 import androidx.lifecycle.findViewTreeLifecycleOwner
 import androidx.lifecycle.lifecycleScope
+import com.mikifus.padland.Utils.NexusNetworkPolicy
 import com.mikifus.padland.Utils.WhiteListMatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,22 +62,12 @@ open class PadLandSaferWebViewClient(var hostsWhitelist: List<String>) : WebView
     }
 
     private fun isValidRequestUrl(url: String?): Boolean {
-        if (url.isNullOrBlank()) return false
-
-        val isHttps = URLUtil.isHttpsUrl(url)
-        val isLocalHttp = URLUtil.isHttpUrl(url) && isLocalhostUrl(url)
-
-        if (!isHttps && !isLocalHttp) {
+        if (!NexusNetworkPolicy.isTransportAllowed(url)) {
             return false
         }
 
         val hostsList: List<String> = corsDomains?.let { hostsWhitelist + it } ?: hostsWhitelist
-        return WhiteListMatcher.isValidHost(url, hostsList)
-    }
-
-    private fun isLocalhostUrl(url: String): Boolean {
-        val host = runCatching { URL(url).host.lowercase() }.getOrNull() ?: return false
-        return host == "localhost"
+        return WhiteListMatcher.isValidHost(url!!, hostsList)
     }
 
     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {

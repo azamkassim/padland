@@ -32,6 +32,7 @@ Content becomes governed NEXUS information only after an explicit governed submi
 9. Third-party WebView cookies are disabled.
 10. Mixed HTTP content is blocked.
 11. WebView cache is set to no-cache and local file/content access is disabled.
+12. The transport rule is centralized in `NexusNetworkPolicy` and covered by unit tests, including host-confusion cases.
 
 ## Built-in development endpoint
 
@@ -48,8 +49,8 @@ This endpoint is intended for same-device local development/testing only.
 - Add an administrator-managed approved-server policy rather than relying only on user-added servers.
 - Add NEXUS workspace metadata (`Customer -> Application -> Workspace -> Team Pad`) without storing authoritative customer facts in the pad client.
 - Add explicit `Submit to NEXUS` snapshot/export flow with immutable lineage and human review.
-- Add security regression tests for transport, TLS failure, whitelist and cookie behaviour.
-- Complete Android build and on-device acceptance testing.
+- Add device/instrumentation regression coverage for TLS failure, whitelist navigation, cookie behaviour, and backup behaviour.
+- Complete on-device acceptance testing against the local Termux Etherpad instance.
 
 ## Automated verification
 
@@ -57,8 +58,11 @@ The branch includes `.github/workflows/android-ci.yml` to run:
 
 - `testDebugUnitTest`
 - `assembleDebug`
+- upload the resulting debug APK as the `nexus-padland-debug` workflow artifact for 7 days
 
 on pull requests to `master` and pushes to the hardening branch.
+
+The pre-policy-refactor hardening baseline successfully completed both inherited unit tests and `assembleDebug` in GitHub Actions. Every subsequent hardening commit must pass the same gate.
 
 ## Release gate
 

@@ -12,6 +12,7 @@ import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.core.widget.addTextChangedListener
 import com.mikifus.padland.R
+import com.mikifus.padland.Utils.NexusNetworkPolicy
 import java.lang.Exception
 import java.net.URL
 
@@ -46,20 +47,14 @@ open class NewServerDialog: FormDialog() {
             return false
         }
 
-        val parsedUrl: URL
         try {
-            parsedUrl = URL(url)
-            parsedUrl.toURI()
+            URL(url).toURI()
         } catch (exception: Exception) {
             Toast.makeText(context, getString(R.string.validation_url_invalid), Toast.LENGTH_LONG).show()
             return false
         }
 
-        val isHttps = parsedUrl.protocol.equals("https", ignoreCase = true)
-        val isLocalhostHttp = parsedUrl.protocol.equals("http", ignoreCase = true) &&
-            parsedUrl.host.equals("localhost", ignoreCase = true)
-
-        if (!isHttps && !isLocalhostHttp) {
+        if (!NexusNetworkPolicy.isTransportAllowed(url)) {
             Toast.makeText(
                 context,
                 "NEXUS requires HTTPS. HTTP is allowed only for localhost.",
