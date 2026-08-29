@@ -20,8 +20,8 @@ public class PadLandContentProvider: ContentProvider() {
     private lateinit var database: PadListDatabase
 
     companion object {
-        /** The authority of this content provider.  */
-        const val AUTHORITY = "com.mikifus.padland.padlandcontentprovider"
+        /** The authority of the isolated NEXUS TeamPad content provider. */
+        const val AUTHORITY = "com.azamkassim.nexusteampad.padlandcontentprovider"
 
         /** The URI for the tables.  */
         val URI_PAD_LIST = Uri.parse(
