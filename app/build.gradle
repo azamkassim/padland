@@ -26,11 +26,11 @@ android {
     }
     defaultConfig {
         compileSdk = 36
-        applicationId "com.mikifus.padland"
+        applicationId "com.azamkassim.nexusteampad"
         minSdkVersion 24
         targetSdkVersion 36
-        versionName '3.6'
-        versionCode 33
+        versionName '3.6-nexus1'
+        versionCode 34
         multiDexEnabled true
         vectorDrawables.useSupportLibrary = true
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
