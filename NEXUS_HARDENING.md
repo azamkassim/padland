@@ -19,7 +19,7 @@ Pads are temporary human collaboration workspaces for:
 
 Content becomes governed NEXUS information only after an explicit governed submission/snapshot process is implemented upstream.
 
-## Security invariants implemented in v1
+## Security and governance invariants implemented
 
 1. Public Etherpad/CryptPad services are not trusted defaults.
 2. Remote collaboration traffic must use HTTPS.
@@ -32,47 +32,71 @@ Content becomes governed NEXUS information only after an explicit governed submi
 9. Third-party WebView cookies are disabled.
 10. Mixed HTTP content is blocked.
 11. WebView cache is set to no-cache and local file/content access is disabled.
-12. The transport rule is centralized in `NexusNetworkPolicy` and covered by unit tests, including host-confusion cases.
+12. `nexus_approved_server_origins` is the administrator-managed runtime trust registry.
+13. End users cannot add a collaboration origin that is absent from that registry.
+14. Persisted server records that are no longer approved are disabled at application startup.
+15. `NexusWorkspaceMetadata` defines opaque `Customer -> Application -> Workspace -> Team Pad` linkage identifiers without storing authoritative banking facts.
+16. `NexusSnapshotManifest` defines a pending-review handoff manifest containing lineage metadata plus SHA-256/content length, not the collaborative text itself.
+17. Creating a snapshot manifest does not make draft content canonical, verified, approved, or governed evidence.
 
 ## Built-in development endpoint
 
-The only built-in server is:
+The only built-in and currently approved server is:
 
 - Name: `NEXUS Local (Termux)`
-- Home: `http://localhost:9001`
+- Origin: `http://localhost:9001`
 - Pad prefix: `http://localhost:9001/p/`
 
 This endpoint is intended for same-device local development/testing only.
 
+## Administrator server policy
+
+The resource `nexus_approved_server_origins` is authoritative. A production remote server must be added there through a reviewed build/configuration change and must use HTTPS.
+
+The ordinary server-management UI can configure only origins already approved by that resource; it cannot expand the trust boundary itself.
+
+## NEXUS handoff contract
+
+See `NEXUS_INTEGRATION_CONTRACT.md`.
+
+Current code provides:
+
+- `NexusWorkspaceMetadata` for opaque NEXUS linkage IDs;
+- `NexusSnapshotManifest` for immutable snapshot lineage/hash metadata;
+- review state `PENDING_GOVERNED_REVIEW`.
+
+The manifest deliberately excludes collaborative content. A future explicit `Submit to NEXUS` workflow must capture and transmit/export the point-in-time content separately to an approved ingestion boundary and preserve human review.
+
 ## Still required before production use
 
-- Add an administrator-managed approved-server policy rather than relying only on user-added servers.
-- Add NEXUS workspace metadata (`Customer -> Application -> Workspace -> Team Pad`) without storing authoritative customer facts in the pad client.
-- Add explicit `Submit to NEXUS` snapshot/export flow with immutable lineage and human review.
-- Add device/instrumentation regression coverage for TLS failure, whitelist navigation, cookie behaviour, and backup behaviour.
-- Complete on-device acceptance testing against the local Termux Etherpad instance.
+- Wire `NexusWorkspaceMetadata` to actual pad/workspace creation and selection without adding authoritative banking facts to the collaboration client.
+- Implement the explicit user-triggered `Submit to NEXUS` snapshot/export flow to an approved NEXUS ingestion boundary.
+- Preserve immutable snapshot lineage and human review after submission.
+- Add device/instrumentation tests for TLS failure, whitelist navigation, cookies, backup behaviour and administrator-registry enforcement.
+- Complete real-device Android acceptance testing.
 
 ## Automated verification
 
 The branch includes `.github/workflows/android-ci.yml` to run:
 
-- `testDebugUnitTest`
-- `assembleDebug`
-- upload the resulting debug APK as the `nexus-padland-debug` workflow artifact for 7 days
-
-on pull requests to `master` and pushes to the hardening branch.
-
-The pre-policy-refactor hardening baseline successfully completed both inherited unit tests and `assembleDebug` in GitHub Actions. Every subsequent hardening commit must pass the same gate.
+- inherited unit tests;
+- NEXUS transport-policy tests;
+- administrator-approved-server policy tests;
+- NEXUS workspace/snapshot contract tests;
+- `assembleDebug`;
+- debug APK artifact upload.
 
 ## Release gate
 
-Do not merge this branch into a production-distributed build until the Android project compiles successfully and the following cases are tested on-device:
+Do not merge this branch into a production-distributed build until the following cases are tested on-device:
 
 1. `http://localhost:9001` works when Etherpad is running locally.
 2. Remote `http://` endpoints are blocked and cannot be saved.
-3. Valid remote `https://` endpoints work only when explicitly configured/whitelisted.
-4. Invalid, expired, mismatched, or untrusted TLS certificates are blocked with no bypass.
-5. Public upstream default servers do not appear in the new-pad server list.
-6. Cancelling an unapproved-host dialog does not load or whitelist that host.
-7. Third-party cookies remain disabled for tested Etherpad use cases.
-8. Application reinstall/backup behaviour does not export collaboration metadata through Android backup.
+3. An unregistered remote HTTPS origin cannot be added through the app.
+4. A registry-approved remote HTTPS origin works when explicitly configured.
+5. Invalid, expired, mismatched, or untrusted TLS certificates are blocked with no bypass.
+6. Public upstream default servers do not appear in the new-pad server list.
+7. Cancelling an unapproved-host dialog does not load or whitelist that host.
+8. Third-party cookies remain disabled for tested Etherpad use cases.
+9. Application reinstall/backup behaviour does not export collaboration metadata through Android backup.
+10. A future submitted snapshot remains `PENDING_GOVERNED_REVIEW` until accepted by the appropriate NEXUS governance process.
